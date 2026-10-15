@@ -1,0 +1,26 @@
+# 构建产物
+dist/
+*.exe
+*.pdb
+*.log
+
+# csc 响应文件
+*.rsp
+
+# 用户本地状态
+DSH-Web.ini
+DSH-Web-data/
+install.txt
+
+# IDE / 编辑器
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+
+# 系统
+Thumbs.db
+desktop.ini
+.DS_Store

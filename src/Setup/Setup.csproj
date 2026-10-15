@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 安装程序工程(传统 csproj 格式)。
+     构建前请先用 build.ps1 生成 dist\DSH-Web.exe,因为安装包需要把它作为内嵌资源打入。 -->
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7C1E1A11-1A11-4A11-9A11-000000000002}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>DshWebSetup</RootNamespace>
+    <AssemblyName>DSH-Web-Setup</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <ApplicationIcon>..\resources\DSH-Web.ico</ApplicationIcon>
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\dist\ide\</OutputPath>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Setup.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 内嵌资源:启动器 + 用户协议(与 build.ps1 中 /resource 参数一致) -->
+    <EmbeddedResource Include="..\..\dist\DSH-Web.exe">
+      <LogicalName>payload.DSH-Web.exe</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\EULA.md">
+      <LogicalName>EULA.md</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
