@@ -21,7 +21,7 @@ internal static class Program
     internal const int DefaultPublicPort = 18080;
     internal const string FallbackPublicHost = "";   // 不再写死任何 IP;探测失败就给局域网地址
     /// <summary>语义版本号:行为有明显变化时手动递增,便于"我这是不是最新版"一眼可辨。</summary>
-    internal const string Version = "1.2";
+    internal const string Version = "1.3";
 
     [STAThread]
     private static void Main(string[] args)
