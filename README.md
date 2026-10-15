@@ -15,6 +15,15 @@
 > 请务必在云安全组 / 路由器上**限制来源 IP**,不要把带令牌的链接转发给不信任的人。  
 > 默认是明文 HTTP;长期公网使用请自行前置反向代理并启用 TLS。详见 [EULA.md](EULA.md)。
 
+## 下载
+
+| 文件 | 说明 |
+| --- | --- |
+| [**DSH-Web-Setup-v1.3.exe**](https://github.com/rxsmzfg/dsh-web-launcher/releases/latest) | **安装包(推荐)**:向导式安装、自动建快捷方式、自带卸载程序 |
+| [DSH-Web-v1.3.exe](https://github.com/rxsmzfg/dsh-web-launcher/releases/latest) | 免安装版:单文件直接运行 |
+
+从 [Releases](https://github.com/rxsmzfg/dsh-web-launcher/releases) 页面下载。
+
 ---
 
 ## 它做什么 / 不做什么
