@@ -64,6 +64,7 @@
 ```powershell
 DSH-Web.exe probe                     # 环境自检(结果写 probe.txt)
 DSH-Web.exe sync                      # 手动同步客户端插件
+DSH-Web.exe prepare                   # 只做环境准备(自举 profile/部署插件/同步),不启动服务
 DSH-Web.exe finddsh [目录]            # 定位 dsh.cmd(可指定目录)
 DSH-Web.exe stop                      # 停止服务
 DSH-Web.exe --local-port 8080 --public-port 18080 --skip-guard --no-watchdog

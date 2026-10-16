@@ -21,7 +21,7 @@ internal static class Program
     internal const int DefaultPublicPort = 18080;
     internal const string FallbackPublicHost = "";   // 不再写死任何 IP;探测失败就给局域网地址
     /// <summary>语义版本号:行为有明显变化时手动递增,便于"我这是不是最新版"一眼可辨。</summary>
-    internal const string Version = "1.3";
+    internal const string Version = "1.4";
 
     [STAThread]
     private static void Main(string[] args)
@@ -38,6 +38,7 @@ internal static class Program
             if (a == "stop") { cmd = "stop"; }
             else if (a == "probe") { cmd = "probe"; }
             else if (a == "sync") { cmd = "sync"; }
+            else if (a == "prepare") { cmd = "prepare"; }
             else if (a == "finddsh") { cmd = "finddsh"; }
             else if (cmd == "finddsh" && !a.StartsWith("-")) { findDir = a; }
             else if (a == "--local-port") { localPort = int.Parse(args[++i]); localSet = true; }
@@ -59,6 +60,7 @@ internal static class Program
         if (cmd == "probe") { Sys.Probe(); return; }
         if (cmd == "stop") { Sys.StopService(true); return; }
         if (cmd == "sync") { RunSyncCli(); return; }
+        if (cmd == "prepare") { RunPrepareCli(); return; }
         if (cmd == "finddsh") { RunFindDshCli(findDir); return; }
 
         Application.EnableVisualStyles();
@@ -82,6 +84,35 @@ internal static class Program
         sb.AppendLine("searchRoots=");
         foreach (string root in Sys.DshSearchRoots()) { sb.AppendLine("  " + root); }
         try { File.WriteAllText(Path.Combine(Sys.WorkDir, "finddsh.log"), sb.ToString(), new UTF8Encoding(false)); } catch { }
+        Console.WriteLine(sb.ToString());
+    }
+
+    /// <summary>
+    /// 命令行环境准备模式:DSH-Web.exe prepare —— 自举 profile → 部署回环插件 → 同步客户端插件。
+    /// 不启动服务、不结束任何进程,适合排障或"先修好环境再启动"。
+    /// </summary>
+    private static void RunPrepareCli()
+    {
+        StringBuilder sb = new StringBuilder();
+        List<string> log = new List<string>();
+        int installed = 0;
+        try { installed = PluginSync.Provision(log, null); }
+        catch (Exception ex) { sb.AppendLine("准备过程出错: " + ex.Message); }
+        foreach (string line in log) { sb.AppendLine(line); }
+
+        string pluginDir = Path.Combine(Sys.ProfilesDir, "web", "plugins", "web-loopback-view");
+        string entry = Path.Combine(pluginDir, "index.mjs");
+        sb.AppendLine("回环插件目录: " + pluginDir);
+        sb.AppendLine("  入口文件存在: " + File.Exists(entry));
+        sb.AppendLine("  包清单存在:   " + File.Exists(Path.Combine(pluginDir, "package.json")));
+        sb.AppendLine("  旧布局残留:   " + File.Exists(Path.Combine(Sys.ProfilesDir, "web", "web-loopback-view.mjs")));
+        if (PluginSync.LastLoopbackError.Length > 0)
+        {
+            sb.AppendLine("  部署失败原因: " + PluginSync.LastLoopbackError);
+        }
+        sb.AppendLine("本次补装的包数: " + installed);
+
+        try { File.WriteAllText(Path.Combine(Sys.WorkDir, "prepare.log"), sb.ToString(), new UTF8Encoding(false)); } catch { }
         Console.WriteLine(sb.ToString());
     }
 

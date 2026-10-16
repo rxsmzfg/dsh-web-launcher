@@ -46,6 +46,25 @@ internal static class PluginSync
     }
 
     private const string LoopbackPluginName = "web-loopback-view.mjs";
+    /// <summary>插件包目录名:插件自成一个包,避免清单解析落到 profile 的 package.json 上。</summary>
+    private const string LoopbackPluginDir = "web-loopback-view";
+    /// <summary>插件包内的入口文件名。</summary>
+    private const string LoopbackPluginEntry = "index.mjs";
+
+    /// <summary>
+    /// 插件自身的 package.json。必须同时有 name 与 version:
+    /// DSH 的 dsh-plugin-package-inventory-deepseek 在准备请求扩展时,会对每个激活条目
+    /// 做"最近清单"解析(nearestManifest),解析到的清单若"有 name 但没 version",
+    /// 它会直接抛错,导致整条 DeepSeek 请求以 request extension preparation failed 失败。
+    /// </summary>
+    private const string LoopbackPluginManifest =
+        "{\n" +
+        "  \"name\": \"dsh-web-loopback-view\",\n" +
+        "  \"version\": \"1.0.0\",\n" +
+        "  \"private\": true,\n" +
+        "  \"type\": \"module\",\n" +
+        "  \"main\": \"index.mjs\"\n" +
+        "}\n";
 
     /// <summary>
     /// 回环视图插件源码。客户端用页面 hostname 判断 isLoopback,公网 IP 访问时为 false,
@@ -66,19 +85,51 @@ internal static class PluginSync
         "  ctx.webServer.tapIndex(function (html) { return html.replace('</head>', SCRIPT + '</head>'); });\n" +
         "}\n";
 
+    /// <summary>回环插件部署失败时的原因(供界面/CLI 显示,避免静默失败)。</summary>
+    internal static string LastLoopbackError = "";
+
     /// <summary>
     /// 把回环视图插件写进 web profile 目录,并保证补丁层里有一条指向它的 insert
     /// (用运行时算出的绝对 file:// URL,所以换机器/换用户名都成立)。
     /// </summary>
     internal static bool EnsureLoopbackPlugin(Action<string> progress)
     {
+        LastLoopbackError = "";
         try
         {
             string webDir = Path.Combine(Sys.ProfilesDir, "web");
             if (!Directory.Exists(webDir)) { return false; }
 
-            string target = Path.Combine(webDir, LoopbackPluginName);
+            // 插件自成一个包(目录 + package.json + 入口),而不是把 .mjs 直接丢在 profile 目录下。
+            // 关键原因:profile 自己的 package.json(dsh-profile-web)只有 name 没有 version,
+            // 一旦插件的"最近清单"解析落到它上面,DeepSeek 请求扩展就会准备失败 —— 表现为
+            // 网页端使用 DeepSeek 模型时报 "DeepSeek request extension preparation failed"。
+            string pkgDir = Path.Combine(webDir, "plugins", LoopbackPluginDir);
+            string manifestPath = Path.Combine(pkgDir, "package.json");
+            string target = Path.Combine(pkgDir, LoopbackPluginEntry);
             string url = new Uri(target).AbsoluteUri;          // file:///C:/...
+
+            try { Directory.CreateDirectory(pkgDir); }
+            catch (Exception ex)
+            {
+                LastLoopbackError = "创建插件目录失败:" + pkgDir + " → " + ex.GetType().Name + ": " + ex.Message;
+                try
+                {
+                    File.AppendAllText(Path.Combine(Sys.WorkDir, "loopback-plugin.log"),
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + LastLoopbackError +
+                        "  (webDir=" + webDir + " 存在=" + Directory.Exists(webDir) + ")" + Environment.NewLine,
+                        new UTF8Encoding(false));
+                }
+                catch { }
+                return false;
+            }
+
+            string currentManifest = File.Exists(manifestPath) ? File.ReadAllText(manifestPath, Encoding.UTF8) : null;
+            if (currentManifest != LoopbackPluginManifest)
+            {
+                if (progress != null) { progress("正在部署网页端回环视图插件…"); }
+                File.WriteAllText(manifestPath, LoopbackPluginManifest, new UTF8Encoding(false));
+            }
 
             string current = File.Exists(target) ? File.ReadAllText(target, Encoding.UTF8) : null;
             if (current != LoopbackPluginSource)
@@ -86,6 +137,10 @@ internal static class PluginSync
                 if (progress != null) { progress("正在部署网页端回环视图插件…"); }
                 File.WriteAllText(target, LoopbackPluginSource, new UTF8Encoding(false));
             }
+
+            // 清理旧布局(直接放在 profile 目录下的 .mjs),避免遗留文件被误当作插件条目
+            string legacy = Path.Combine(webDir, LoopbackPluginName);
+            if (File.Exists(legacy)) { try { File.Delete(legacy); } catch { } }
 
             string patch = Path.Combine(webDir, "cordis.patch.yml");
             string text = File.Exists(patch) ? File.ReadAllText(patch, Encoding.UTF8) : "";
@@ -118,7 +173,18 @@ internal static class PluginSync
             }
             return true;
         }
-        catch { return false; }
+        catch (Exception ex)
+        {
+            LastLoopbackError = ex.GetType().Name + ": " + ex.Message;
+            try
+            {
+                File.AppendAllText(Path.Combine(Sys.WorkDir, "loopback-plugin.log"),
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + LastLoopbackError + Environment.NewLine,
+                    new UTF8Encoding(false));
+            }
+            catch { }
+            return false;
+        }
     }
 
     /// <summary>
