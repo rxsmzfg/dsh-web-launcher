@@ -21,7 +21,7 @@ internal static class Program
     internal const int DefaultPublicPort = 18080;
     internal const string FallbackPublicHost = "";   // 不再写死任何 IP;探测失败就给局域网地址
     /// <summary>语义版本号:行为有明显变化时手动递增,便于"我这是不是最新版"一眼可辨。</summary>
-    internal const string Version = "1.4";
+    internal const string Version = "1.5";
 
     [STAThread]
     private static void Main(string[] args)
@@ -106,6 +106,9 @@ internal static class Program
         sb.AppendLine("  入口文件存在: " + File.Exists(entry));
         sb.AppendLine("  包清单存在:   " + File.Exists(Path.Combine(pluginDir, "package.json")));
         sb.AppendLine("  旧布局残留:   " + File.Exists(Path.Combine(Sys.ProfilesDir, "web", "web-loopback-view.mjs")));
+        string patch = Path.Combine(Sys.ProfilesDir, "web", "cordis.patch.yml");
+        string patchText = File.Exists(patch) ? File.ReadAllText(patch, Encoding.UTF8) : "";
+        sb.AppendLine("  远程目录选择器: " + (patchText.IndexOf("id: directory-picker-browse", StringComparison.Ordinal) >= 0));
         if (PluginSync.LastLoopbackError.Length > 0)
         {
             sb.AppendLine("  部署失败原因: " + PluginSync.LastLoopbackError);
