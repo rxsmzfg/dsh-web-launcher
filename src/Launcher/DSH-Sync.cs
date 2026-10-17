@@ -64,11 +64,11 @@ internal static class PluginSync
             bool changed = false;
 
             // 关闭自动选择器(它会选 native),显式装 browser 后端及对应网页 UI。
-            if (text.IndexOf("id: directory-picker-auto", StringComparison.Ordinal) < 0)
+            if (text.IndexOf("id: directory-picker", StringComparison.Ordinal) < 0)
             {
                 if (progress != null) { progress("正在启用浏览器内的服务器目录选择器…"); }
                 if (text.Length > 0 && !text.EndsWith("\n")) { text += "\n"; }
-                text += "- id: directory-picker-auto\n  name: '@deepseek-ai/dsh-host-directory-picker-auto'\n  disabled: true\n";
+                text += "- id: directory-picker\n  name: '@deepseek-ai/dsh-host-directory-picker-auto'\n  disabled: true\n";
                 changed = true;
             }
             if (text.IndexOf("id: directory-picker-browse", StringComparison.Ordinal) < 0)

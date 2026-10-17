@@ -15,7 +15,7 @@ using System.Windows.Forms;
 internal static class SetupProgram
 {
     internal const string AppName = "DSH 网页端启动器";
-    internal const string VersionText = "v1.5";
+    internal const string VersionText = "v1.6";
     internal const string PayloadExe = "DSH-Web.exe";
     internal const string PayloadResource = "payload.DSH-Web.exe";
     internal const string EulaResource = "EULA.md";
